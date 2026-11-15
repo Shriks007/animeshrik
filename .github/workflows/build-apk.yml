@@ -71,6 +71,24 @@ jobs:
           TAURI_ENV_PLATFORM: android
         run: |
           pnpm tauri android init
+          python3 -c "
+          path = 'src-tauri/gen/android/app/src/main/AndroidManifest.xml'
+          with open(path, 'r') as f:
+              content = f.read()
+          deep_link_filter = '''
+                <intent-filter>
+                  <action android:name=\"android.intent.action.VIEW\" />
+                  <category android:name=\"android.intent.category.DEFAULT\" />
+                  <category android:name=\"android.intent.category.BROWSABLE\" />
+                  <data android:scheme=\"animeshrik\" />
+                </intent-filter>
+          '''
+          if 'android:scheme=\"animeshrik\"' not in content:
+              content = content.replace('</activity>', deep_link_filter + '\n    </activity>')
+              with open(path, 'w') as f:
+                  f.write(content)
+          print('Injected animeshrik scheme intent-filter into AndroidManifest.xml')
+          "
           pnpm tauri android build --apk --debug --target aarch64
 
       - name: Locate Generated APKs
