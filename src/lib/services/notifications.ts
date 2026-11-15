@@ -1,6 +1,7 @@
 import { derived, get, writable } from 'svelte/store';
 import { watchlist } from '$lib/stores/watchlist';
 import { persisted } from '$lib/stores/persisted';
+import { settings } from '$lib/stores/settings';
 import { gql } from '$lib/services/anilist';
 
 /**
@@ -100,7 +101,7 @@ async function fetchAiring(ids: number[], start: number, end: number): Promise<A
 	return out;
 }
 
-function buildItems(rows: AiringRow[], now: number): NotificationItem[] {
+function buildItems(rows: AiringRow[], now: number, includeUpcoming = true): NotificationItem[] {
 	const seen = new Set<string>();
 	const items: NotificationItem[] = [];
 	for (const row of rows) {
@@ -120,7 +121,9 @@ function buildItems(rows: AiringRow[], now: number): NotificationItem[] {
 	}
 	// New first (most recently aired on top), then upcoming (soonest first).
 	const news = items.filter((n) => n.kind === 'new').sort((a, b) => b.airingAt - a.airingAt);
-	const upcoming = items.filter((n) => n.kind === 'upcoming').sort((a, b) => a.airingAt - b.airingAt);
+	const upcoming = includeUpcoming
+		? items.filter((n) => n.kind === 'upcoming').sort((a, b) => a.airingAt - b.airingAt)
+		: [];
 	return [...news, ...upcoming];
 }
 
@@ -146,8 +149,14 @@ export async function refreshNotifications(force = false): Promise<void> {
 	notificationsLoading.set(true);
 	notificationsError.set('');
 	try {
+		const st = get(settings);
+		if (!st.notifyNewEpisodes) {
+			notifications.set([]);
+			return;
+		}
+		const allowedStatuses = st.notifyWatchingOnly ? ['watching'] : ['watching', 'planned'];
 		const ids = Object.values(get(watchlist))
-			.filter((e) => e.status === 'watching' || e.status === 'planned')
+			.filter((e) => allowedStatuses.includes(e.status))
 			.map((e) => e.id);
 		if (!ids.length) {
 			notifications.set([]);
@@ -155,7 +164,7 @@ export async function refreshNotifications(force = false): Promise<void> {
 		}
 		const now = Math.floor(Date.now() / 1000);
 		const rows = await fetchAiring(ids, now - NEW_WINDOW_S, now + UPCOMING_WINDOW_S);
-		notifications.set(buildItems(rows, now));
+		notifications.set(buildItems(rows, now, st.notifyUpcoming));
 		lastRefresh = Date.now();
 		pruneRead();
 	} catch (e) {

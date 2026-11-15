@@ -112,3 +112,33 @@ pub async fn sync_media_progress(
         Err(format!("AniList returned HTTP {}", resp.status()))
     }
 }
+
+pub async fn exchange_auth_code(code: &str) -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let params = [
+        ("grant_type", "authorization_code"),
+        ("client_id", "57081"),
+        ("client_secret", "394ps9UhZgGIIrtex7e8tfWBNNBgWJ0sPv5rmoy1"),
+        ("redirect_uri", "https://anilist.co/api/v2/oauth/pin"),
+        ("code", code),
+    ];
+    let resp = client
+        .post("https://anilist.co/api/v2/oauth/token")
+        .form(&params)
+        .header("Accept", "application/json")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let json: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+    if let Some(token) = json["access_token"].as_str() {
+        Ok(token.to_string())
+    } else {
+        let err = json["error_description"]
+            .as_str()
+            .or_else(|| json["message"].as_str())
+            .unwrap_or("Failed to exchange code for token");
+        Err(err.to_string())
+    }
+}
+

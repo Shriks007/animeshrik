@@ -18,7 +18,7 @@ export const ANIZIP_URL: string = (env.PUBLIC_ANIZIP_URL ?? 'https://api.ani.zip
 	''
 );
 
-export const ANILIST_CLIENT_ID: string = env.PUBLIC_ANILIST_CLIENT_ID || '56322';
+export const ANILIST_CLIENT_ID: string = env.PUBLIC_ANILIST_CLIENT_ID || '57081';
 
 export const SITE_URL: string = (
 	env.PUBLIC_SITE_URL ?? (typeof location !== 'undefined' ? location.origin : '')

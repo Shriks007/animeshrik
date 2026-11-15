@@ -298,6 +298,44 @@
 						</button>
 					{/each}
 
+					<!-- Episode Notifications Options -->
+					<div class="p-4">
+						<h3 class="text-sm font-semibold text-ink">Episode Notifications</h3>
+						<p class="mt-0.5 text-xs text-muted">Manage release alerts for your anime</p>
+
+						<div class="mt-3 space-y-3">
+							<button on:click={() => toggle('notifyNewEpisodes')} class="flex w-full items-center justify-between py-1 text-left">
+								<span>
+									<span class="block text-xs font-medium text-ink">New Episode Alerts</span>
+									<span class="block text-[11px] text-muted">Receive in-app bell notifications when new episodes air</span>
+								</span>
+								<span class="relative h-5 w-9 shrink-0 rounded-full transition-colors {$settings.notifyNewEpisodes ? 'bg-accent' : 'bg-line/60'}">
+									<span class="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all {$settings.notifyNewEpisodes ? 'left-[18px]' : 'left-0.5'}"></span>
+								</span>
+							</button>
+
+							<button on:click={() => toggle('notifyWatchingOnly')} class="flex w-full items-center justify-between py-1 text-left">
+								<span>
+									<span class="block text-xs font-medium text-ink">Watching List Only</span>
+									<span class="block text-[11px] text-muted">Only notify for titles currently marked "Watching" (exclude Planning)</span>
+								</span>
+								<span class="relative h-5 w-9 shrink-0 rounded-full transition-colors {$settings.notifyWatchingOnly ? 'bg-accent' : 'bg-line/60'}">
+									<span class="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all {$settings.notifyWatchingOnly ? 'left-[18px]' : 'left-0.5'}"></span>
+								</span>
+							</button>
+
+							<button on:click={() => toggle('notifyUpcoming')} class="flex w-full items-center justify-between py-1 text-left">
+								<span>
+									<span class="block text-xs font-medium text-ink">Include Upcoming (24h)</span>
+									<span class="block text-[11px] text-muted">Show upcoming episodes scheduled to air within 24 hours</span>
+								</span>
+								<span class="relative h-5 w-9 shrink-0 rounded-full transition-colors {$settings.notifyUpcoming ? 'bg-accent' : 'bg-line/60'}">
+									<span class="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all {$settings.notifyUpcoming ? 'left-[18px]' : 'left-0.5'}"></span>
+								</span>
+							</button>
+						</div>
+					</div>
+
 					<!-- Preferred audio -->
 					<div class="p-4">
 						<p class="text-sm font-medium text-ink">{t('preferredAudio', $lang)}</p>

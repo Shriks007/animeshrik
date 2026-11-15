@@ -25,13 +25,19 @@ async fn sync_anilist_progress(
     anilist::sync_media_progress(&token, media_id, &status, progress).await
 }
 
+#[tauri::command]
+async fn exchange_anilist_code(code: String) -> Result<String, String> {
+    anilist::exchange_auth_code(&code).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             get_streams,
             get_anilist_viewer,
-            sync_anilist_progress
+            sync_anilist_progress,
+            exchange_anilist_code
         ])
         .run(tauri::generate_context!())
         .expect("error while running AnimeShrik application");

@@ -41,6 +41,12 @@ export interface Settings {
 	compactCards: boolean;
 	/** Hide adult (18+) titles across the app. */
 	hideAdult: boolean;
+	/** Notifications for new released episodes. */
+	notifyNewEpisodes: boolean;
+	/** Notifications for watching list only (exclude planning). */
+	notifyWatchingOnly: boolean;
+	/** Include upcoming episodes in notifications. */
+	notifyUpcoming: boolean;
 	/** Site display language for titles. */
 	lang: Lang;
 }
@@ -68,6 +74,9 @@ export const defaultSettings: Settings = {
 	reduceMotion: false,
 	compactCards: false,
 	hideAdult: false,
+	notifyNewEpisodes: true,
+	notifyWatchingOnly: true,
+	notifyUpcoming: true,
 	lang: 'en'
 };
 
