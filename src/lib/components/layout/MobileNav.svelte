@@ -47,11 +47,13 @@
 	let syncing = false;
 	let malSyncing = false;
 
-	// Bottom-bar items: home + search + schedule; everything else lives in the profile drawer.
+	// Primary mobile navigation: Home, Search, Schedule, Watchlist, Settings
 	const items = [
 		{ href: '/home', key: 'home', icon: Home },
-		{ key: 'search', key2: 'search', icon: Search },
-		{ href: '/schedule', key: 'schedule', icon: Calendar }
+		{ href: '/search', key: 'search', icon: Search },
+		{ href: '/schedule', key: 'schedule', icon: Calendar },
+		{ href: '/watchlist', key: 'watchlist', icon: Bookmark },
+		{ href: '/settings', key: 'settings', icon: SettingsIcon }
 	];
 
 	function isActive(it: (typeof items)[number]) {
@@ -108,18 +110,25 @@
 	class="fixed bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-2xl border border-line/60 bg-bg/80 px-2 py-1.5 shadow-2xl backdrop-blur-2xl md:hidden"
 >
 	{#each items as it (it.key)}
-		{#if 'key2' in it && it.key2 === 'search'}
+		{#if it.key === 'search' && onSearch}
 			<button
 				on:click={onSearch}
-				class="mnav-item relative flex min-w-[68px] flex-col items-center gap-1 rounded-xl px-3 py-2 text-muted transition-colors duration-200 active:scale-95"
+				class="mnav-item relative flex min-w-[58px] flex-col items-center gap-1 rounded-xl px-2.5 py-1.5 transition-colors duration-200 active:scale-95 {isActive(
+					it
+				)
+					? 'text-accent'
+					: 'text-muted'}"
 			>
-				<Search size={19} strokeWidth={1.9} />
+				<svelte:component this={it.icon} size={19} strokeWidth={isActive(it) ? 2.4 : 1.9} />
 				<span class="text-[10px] font-medium tracking-wide">{t(it.key, $lang)}</span>
+				{#if isActive(it)}
+					<span class="mnav-line" aria-hidden="true"></span>
+				{/if}
 			</button>
 		{:else}
 			<a
 				href={it.href}
-				class="mnav-item relative flex min-w-[68px] flex-col items-center gap-1 rounded-xl px-3 py-2 transition-colors duration-200 {isActive(
+				class="mnav-item relative flex min-w-[58px] flex-col items-center gap-1 rounded-xl px-2.5 py-1.5 transition-colors duration-200 {isActive(
 					it
 				)
 					? 'text-accent'
@@ -133,19 +142,6 @@
 			</a>
 		{/if}
 	{/each}
-
-	<!-- Notifications bell -->
-	<NotificationBell variant="bottom" />
-
-	<!-- Profile — opens sheet with all remaining options -->
-	<button
-		on:click={() => (sheetOpen = true)}
-		class="mnav-item relative flex min-w-[68px] flex-col items-center gap-1 rounded-xl px-3 py-2 text-muted transition-colors duration-200 active:scale-95"
-		aria-label={t('profileMore', $lang)}
-	>
-		<User size={19} strokeWidth={1.9} />
-		<span class="text-[10px] font-medium tracking-wide">{t('profile', $lang)}</span>
-	</button>
 </nav>
 
 <!-- Profile drawer: every option not in the top nav -->

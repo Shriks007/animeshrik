@@ -18,7 +18,7 @@ export const ANIZIP_URL: string = (env.PUBLIC_ANIZIP_URL ?? 'https://api.ani.zip
 	''
 );
 
-export const ANILIST_CLIENT_ID: string = env.PUBLIC_ANILIST_CLIENT_ID ?? '';
+export const ANILIST_CLIENT_ID: string = env.PUBLIC_ANILIST_CLIENT_ID || '56322';
 
 export const SITE_URL: string = (
 	env.PUBLIC_SITE_URL ?? (typeof location !== 'undefined' ? location.origin : '')
@@ -44,15 +44,20 @@ export const ANILIST_TOKEN_URL = 'https://anilist.co/api/v2/oauth/token';
 export const ANILIST_CALLBACK_PATH = '/auth/anilist/callback';
 export const ANILIST_REDIRECT_URI = `${SITE_URL}${ANILIST_CALLBACK_PATH}`;
 
+export function isTauriApp(): boolean {
+	return typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
+}
+
 /**
  * OAuth redirect URI for the origin the browser is currently on.
  *
- * The site is reached from several origins during development (localhost, and
- * a LAN IP when testing on a phone). A fixed redirect URI sends the phone back
- * to its own empty `localhost`, which 404s. Following the current origin keeps
- * the callback on the device that started the login.
+ * In native Tauri Mobile app, uses the custom deep link scheme
+ * `animeshrik://auth/anilist/callback`. Otherwise uses current web origin.
  */
 export function anilistRedirectUri(): string {
+	if (isTauriApp()) {
+		return 'animeshrik://auth/anilist/callback';
+	}
 	if (typeof location !== 'undefined' && location.origin) {
 		return `${location.origin}${ANILIST_CALLBACK_PATH}`;
 	}

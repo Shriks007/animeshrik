@@ -7,7 +7,8 @@ import {
 	ANILIST_CLIENT_ID,
 	ANILIST_GRAPHQL,
 	ANILIST_CALLBACK_PATH,
-	anilistRedirectUri
+	anilistRedirectUri,
+	isTauriApp
 } from '$lib/config';
 import {
 	clearResolvedTombstones,
@@ -57,7 +58,7 @@ export function startLogin(): void {
 	const params = new URLSearchParams({
 		client_id: ANILIST_CLIENT_ID,
 		redirect_uri: redirect,
-		response_type: 'code'
+		response_type: isTauriApp() ? 'token' : 'code'
 	});
 	location.href = `${ANILIST_AUTH_URL}?${params}`;
 }

@@ -22,27 +22,40 @@
 			error = params.get('error_description') || oauthError;
 			return;
 		}
+		// Check for direct access token (implicit / mobile grant) in hash or query
+		let token = params.get('access_token');
+		if (!token && typeof location !== 'undefined' && location.hash) {
+			const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
+			token = hashParams.get('access_token');
+		}
+
 		const code = params.get('code');
-		if (!code) {
+		if (!code && !token) {
 			error = t('noAuthCode', $lang);
 			return;
 		}
 		// Already signed in — a refresh or Back press lands here with the
-		// same (now spent) code. Don't exchange it again; AniList would
-		// answer "Authorization code has been revoked".
+		// same code. Don't exchange it again.
 		if (get(settings).anilistToken) {
 			goto('/home');
 			return;
 		}
-		// Never exchange the same code twice in this session.
-		const spentKey = `anikage:anilist:code:${code}`;
-		if (sessionStorage.getItem(spentKey)) {
-			error = t('signInLinkUsed', $lang);
-			return;
+
+		if (code) {
+			// Never exchange the same code twice in this session.
+			const spentKey = `anikage:anilist:code:${code}`;
+			if (sessionStorage.getItem(spentKey)) {
+				error = t('signInLinkUsed', $lang);
+				return;
+			}
+			sessionStorage.setItem(spentKey, '1');
 		}
-		sessionStorage.setItem(spentKey, '1');
+
 		try {
-			const token = await exchangeCode(code);
+			if (!token && code) {
+				token = await exchangeCode(code);
+			}
+			if (!token) throw new Error('Failed to obtain access token');
 			updateSetting('anilistToken', token);
 			// Never reuse another account's snapshot or pending deletes.
 			resetProvider('anilist');

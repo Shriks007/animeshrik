@@ -284,6 +284,22 @@ async function requestOnce(anilistId: number, epNo: number, key: string): Promis
 	const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT);
 
 	try {
+		// In Tauri native mobile app, call Rust backend directly for zero CORS and native speed
+		if (typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)) {
+			try {
+				const core = (window as unknown as { __TAURI__?: { core?: { invoke: (cmd: string, args?: unknown) => Promise<StreamData> } } }).__TAURI__?.core;
+				if (core?.invoke) {
+					const nativeData = await core.invoke('get_streams', { anilistId, episode: epNo });
+					if (nativeData && nativeData.groups) {
+						cache.set(key, { data: nativeData, at: Date.now() });
+						return nativeData;
+					}
+				}
+			} catch (e) {
+				/* fall back to web fetch */
+			}
+		}
+
 		let res: Response;
 		try {
 			// Same-origin proxy — no cross-origin handshake, so the request

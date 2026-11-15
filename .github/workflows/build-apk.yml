@@ -1,0 +1,84 @@
+name: Build AnimeShrik Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: Build Android APK (Tauri + Rust)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK & NDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 11076708
+
+      - name: Install Android Platforms and NDK
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
+
+      - name: Set Android Environment Variables
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Frontend Dependencies
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm approve-builds --all
+
+      - name: Initialize Tauri Android Scaffolding (if needed)
+        run: |
+          pnpm dlx @tauri-apps/cli android init || true
+
+      - name: Build Android APK (Debug & Release)
+        run: |
+          # Build universal & aarch64 debug APK for instant testing on Nothing Phone 4A 5G
+          export TAURI_BUILD=1
+          export TAURI_ENV_PLATFORM=android
+          pnpm dlx @tauri-apps/cli android build --apk --debug --target aarch64
+
+      - name: Locate Generated APKs
+        id: find_apks
+        run: |
+          mkdir -p output-apks
+          find src-tauri/gen/android -name "*.apk" -exec cp {} output-apks/ \;
+          ls -la output-apks/
+
+      - name: Upload AnimeShrik APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AnimeShrik-Android-APK
+          path: output-apks/*.apk
+          retention-days: 14

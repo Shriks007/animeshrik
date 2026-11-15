@@ -206,6 +206,14 @@
 					<Command size={10} /> S
 				</span>
 			</button>
+			<!-- Mobile search button -->
+			<button
+				on:click={onSearch}
+				class="grid h-8 w-8 place-items-center rounded-full border border-line/50 bg-surface/40 text-muted transition-all duration-150 hover:border-accent/40 hover:text-ink sm:hidden"
+				aria-label={t('search', $lang)}
+			>
+				<Search size={15} />
+			</button>
 
 
 			<div bind:this={spacer} class="flex-1"></div>
@@ -326,7 +334,7 @@
 			</div>
 
 			<!-- Notifications bell -->
-			<div class="hidden sm:block">
+			<div class="block">
 				<NotificationBell variant="header" />
 			</div>
 
