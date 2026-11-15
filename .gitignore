@@ -2,9 +2,11 @@
 node_modules/
 
 # Build outputs
+build/
 .build/
 .svelte-kit/
 dist/
+src-tauri/target/
 *.local
 
 # Environment files

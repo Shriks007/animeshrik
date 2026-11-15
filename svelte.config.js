@@ -1,5 +1,5 @@
 import vercelAdapter from '@sveltejs/adapter-vercel';
-import autoAdapter from '@sveltejs/adapter-auto';
+import staticAdapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const isTauri = Boolean(process.env.TAURI_ENV_PLATFORM || process.env.TAURI_BUILD);
@@ -8,7 +8,9 @@ const isTauri = Boolean(process.env.TAURI_ENV_PLATFORM || process.env.TAURI_BUIL
 const config = {
     preprocess: vitePreprocess(),
     kit: {
-        adapter: isTauri ? autoAdapter() : vercelAdapter({ runtime: 'nodejs22.x' }),
+        adapter: isTauri
+            ? staticAdapter({ pages: 'build', assets: 'build', fallback: 'index.html', strict: false })
+            : vercelAdapter({ runtime: 'nodejs22.x' }),
         experimental: {
             handleRenderingErrors: true
         }

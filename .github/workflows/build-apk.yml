@@ -50,9 +50,11 @@ jobs:
           pnpm install --no-frozen-lockfile
           pnpm approve-builds --all
 
-      - name: Initialize Tauri Android Scaffolding (if needed)
+      - name: Build Frontend for Tauri
         run: |
-          pnpm tauri android init || true
+          export TAURI_BUILD=1
+          export TAURI_ENV_PLATFORM=android
+          pnpm run build
 
       - name: Build Android APK (Debug)
         run: |
