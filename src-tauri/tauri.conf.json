@@ -34,9 +34,7 @@
       "icons/icon.ico"
     ],
     "android": {
-      "v4a": true,
-      "v8a": true,
-      "x86_64": true
+      "minSdkVersion": 24
     }
   }
 }
