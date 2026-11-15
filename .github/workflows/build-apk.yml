@@ -33,7 +33,7 @@ jobs:
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -59,7 +59,7 @@ jobs:
 
       - name: Initialize Tauri Android Project
         run: |
-          pnpm tauri android init --ci
+          pnpm tauri android init --ci --verbose
           python3 -c '
           import os
           for root, dirs, files in os.walk("src-tauri/gen/android"):
