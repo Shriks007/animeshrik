@@ -1,4 +1,5 @@
 import type { DownloadEntry, SkipWindow, StreamCategory, StreamData, StreamSource } from '$lib/types';
+import { API_URL } from '$lib/config';
 
 /**
  * AnimeShrik worker stream service.
@@ -302,14 +303,43 @@ async function requestOnce(anilistId: number, epNo: number, key: string): Promis
 
 		let res: Response;
 		try {
-			// Same-origin proxy — no cross-origin handshake, so the request
-			// can never stall the way a direct worker fetch can.
-			res = await fetch(`/api/stream/${anilistId}/${epNo}`, { signal: ctrl.signal });
-		} catch {
-			if (ctrl.signal.aborted) {
-				throw new StreamError('timeout', 'Server list took too long to load. Try again.');
+			// In static/mobile builds, call worker directly. If running on a server, try same-origin proxy first.
+			const isStaticOrMobile = typeof window !== 'undefined' && (
+				window.location.protocol === 'tauri:' ||
+				window.location.protocol === 'file:' ||
+				window.location.hostname === 'localhost' ||
+				window.location.hostname === '127.0.0.1' ||
+				window.location.hostname.includes('tauri')
+			);
+
+			if (isStaticOrMobile) {
+				res = await fetch(`${API_URL}/${anilistId}/${epNo}`, {
+					headers: { Accept: 'application/json' },
+					signal: ctrl.signal
+				});
+			} else {
+				res = await fetch(`/api/stream/${anilistId}/${epNo}`, { signal: ctrl.signal });
+				const contentType = res.headers.get('content-type') || '';
+				if (!contentType.includes('application/json')) {
+					// Fallback to direct worker fetch if proxy returned HTML (e.g. static fallback)
+					res = await fetch(`${API_URL}/${anilistId}/${epNo}`, {
+						headers: { Accept: 'application/json' },
+						signal: ctrl.signal
+					});
+				}
 			}
-			throw new StreamError('offline', 'Stream service unreachable. Check your connection.');
+		} catch {
+			try {
+				res = await fetch(`${API_URL}/${anilistId}/${epNo}`, {
+					headers: { Accept: 'application/json' },
+					signal: ctrl.signal
+				});
+			} catch {
+				if (ctrl.signal.aborted) {
+					throw new StreamError('timeout', 'Server list took too long to load. Try again.');
+				}
+				throw new StreamError('offline', 'Stream service unreachable. Check your connection.');
+			}
 		}
 
 		if (!res.ok) {
@@ -324,7 +354,11 @@ async function requestOnce(anilistId: number, epNo: number, key: string): Promis
 
 		let raw: Record<string, unknown>;
 		try {
-			raw = (await res.json()) as Record<string, unknown>;
+			const text = await res.text();
+			if (!text.trim().startsWith('{')) {
+				throw new Error('Not JSON');
+			}
+			raw = JSON.parse(text) as Record<string, unknown>;
 		} catch {
 			throw new StreamError('invalid', 'Invalid stream data received.');
 		}

@@ -45,7 +45,13 @@ export const ANILIST_CALLBACK_PATH = '/auth/anilist/callback';
 export const ANILIST_REDIRECT_URI = `${SITE_URL}${ANILIST_CALLBACK_PATH}`;
 
 export function isTauriApp(): boolean {
-	return typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
+	return (
+		typeof window !== 'undefined' &&
+		('__TAURI_INTERNALS__' in window ||
+			'__TAURI__' in window ||
+			window.location.protocol === 'tauri:' ||
+			window.location.hostname.includes('tauri'))
+	);
 }
 
 /**
