@@ -38,15 +38,5 @@
       "v8a": true,
       "x86_64": true
     }
-  },
-  "plugins": {
-    "deep-link": {
-      "desktop": {
-        "schemes": ["animeshrik"]
-      },
-      "mobile": {
-        "schemes": ["animeshrik"]
-      }
-    }
   }
 }
