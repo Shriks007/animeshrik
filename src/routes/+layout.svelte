@@ -21,7 +21,7 @@
 	let paletteOpen = false;
 
 	/** The lander is a standalone page — no top bar, bottom bar or footer. */
-	$: bare = $page.url.pathname === '/';
+	$: bare = $page.url.pathname === '/landing';
 
 	// Every page starts from the site-wide card; pages that have their own
 	// artwork (anime, episode) replace it once their data arrives.
@@ -74,7 +74,7 @@
 	</div>
 
 	{#if !bare}
-		<MobileNav onSearch={() => (paletteOpen = true)} />
+		<MobileNav />
 	{/if}
 	<CommandPalette
 		open={paletteOpen}

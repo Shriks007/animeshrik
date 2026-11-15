@@ -24,8 +24,6 @@
 	import { startLogin, syncAnilistWatchlist, logout } from '$lib/services/anilistOAuth';
 	import { startMalLogin, malLogout, syncMalWatchlist } from '$lib/services/malOAuth';
 
-	export let onSearch: () => void;
-
 	$: path = $page.url.pathname;
 	$: anilistOn = !!$settings.anilistToken;
 	$: malOn = !!$settings.malToken;
@@ -58,6 +56,9 @@
 
 	function isActive(it: (typeof items)[number]) {
 		if ('href' in it && it.href) {
+			if (it.href === '/home') {
+				return path === '/' || path === '/home';
+			}
 			return it.href === '/' ? path === '/' : path.startsWith(it.href);
 		}
 		return false;
@@ -107,40 +108,23 @@
 </script>
 
 <nav
-	class="fixed bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-2xl border border-line/60 bg-bg/80 px-2 py-1.5 shadow-2xl backdrop-blur-2xl md:hidden"
+	class="fixed bottom-3 left-1/2 z-[100] flex -translate-x-1/2 items-center gap-1 rounded-2xl border border-line/60 bg-bg/90 px-2 py-1.5 shadow-2xl backdrop-blur-2xl md:hidden mb-[env(safe-area-inset-bottom,0px)]"
 >
 	{#each items as it (it.key)}
-		{#if it.key === 'search' && onSearch}
-			<button
-				on:click={onSearch}
-				class="mnav-item relative flex min-w-[58px] flex-col items-center gap-1 rounded-xl px-2.5 py-1.5 transition-colors duration-200 active:scale-95 {isActive(
-					it
-				)
-					? 'text-accent'
-					: 'text-muted'}"
-			>
-				<svelte:component this={it.icon} size={19} strokeWidth={isActive(it) ? 2.4 : 1.9} />
-				<span class="text-[10px] font-medium tracking-wide">{t(it.key, $lang)}</span>
-				{#if isActive(it)}
-					<span class="mnav-line" aria-hidden="true"></span>
-				{/if}
-			</button>
-		{:else}
-			<a
-				href={it.href}
-				class="mnav-item relative flex min-w-[58px] flex-col items-center gap-1 rounded-xl px-2.5 py-1.5 transition-colors duration-200 {isActive(
-					it
-				)
-					? 'text-accent'
-					: 'text-muted'}"
-			>
-				<svelte:component this={it.icon} size={19} strokeWidth={isActive(it) ? 2.4 : 1.9} />
-				<span class="text-[10px] font-medium tracking-wide">{t(it.key, $lang)}</span>
-				{#if isActive(it)}
-					<span class="mnav-line" aria-hidden="true"></span>
-				{/if}
-			</a>
-		{/if}
+		<a
+			href={it.href}
+			class="mnav-item relative flex min-w-[58px] flex-col items-center gap-1 rounded-xl px-2.5 py-1.5 transition-colors duration-200 active:scale-95 {isActive(
+				it
+			)
+				? 'text-accent'
+				: 'text-muted'}"
+		>
+			<svelte:component this={it.icon} size={19} strokeWidth={isActive(it) ? 2.4 : 1.9} />
+			<span class="text-[10px] font-medium tracking-wide">{t(it.key, $lang)}</span>
+			{#if isActive(it)}
+				<span class="mnav-line" aria-hidden="true"></span>
+			{/if}
+		</a>
 	{/each}
 </nav>
 
