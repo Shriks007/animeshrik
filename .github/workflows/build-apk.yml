@@ -11,6 +11,8 @@ jobs:
   build-apk:
     name: Build Android APK (Tauri + Rust)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -27,8 +29,9 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
+          NDK_DIR=$(find $ANDROID_HOME/ndk -maxdepth 1 -mindepth 1 -type d | head -n 1)
+          echo "NDK_HOME=$NDK_DIR" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$NDK_DIR" >> $GITHUB_ENV
 
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -57,44 +60,26 @@ jobs:
           export TAURI_ENV_PLATFORM=android
           pnpm run build
 
-      - name: Initialize Tauri Android Project
-        run: |
-          pnpm tauri android init --ci --verbose
-          python3 -c '
-          import os
-          for root, dirs, files in os.walk("src-tauri/gen/android"):
-              if "AndroidManifest.xml" in files:
-                  p = os.path.join(root, "AndroidManifest.xml")
-                  with open(p, "r") as f:
-                      c = f.read()
-                  intent = """
-                      <intent-filter>
-                          <action android:name="android.intent.action.VIEW" />
-                          <category android:name="android.intent.category.DEFAULT" />
-                          <category android:name="android.intent.category.BROWSABLE" />
-                          <data android:scheme="animeshrik" android:host="auth" android:pathPrefix="/anilist/callback" />
-                      </intent-filter>"""
-                  if "</activity>" in c and "animeshrik" not in c:
-                      c = c.replace("</activity>", intent + "\n            </activity>")
-                      with open(p, "w") as f:
-                          f.write(c)
-                      print("Patched intent-filter in", p)
-          '
-
-      - name: Build Android APK (Debug)
-        run: |
-          export TAURI_BUILD=1
-          export TAURI_ENV_PLATFORM=android
-          pnpm tauri android build --apk --debug --target aarch64
+      - name: Build Android APK with Tauri Action
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_BUILD: 1
+          TAURI_ENV_PLATFORM: android
+        with:
+          mobile: android
+          args: --apk --target aarch64
 
       - name: Locate Generated APKs
-        id: find_apks
+        if: always()
         run: |
           mkdir -p output-apks
-          find src-tauri/gen/android -name "*.apk" -exec cp {} output-apks/ \;
-          ls -la output-apks/
+          find src-tauri/gen/android -name "*.apk" -exec cp {} output-apks/ \; 2>&1 || true
+          find target -name "*.apk" -exec cp {} output-apks/ \; 2>&1 || true
+          ls -la output-apks/ || true
 
       - name: Upload AnimeShrik APK Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: AnimeShrik-Android-APK
