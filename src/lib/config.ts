@@ -61,13 +61,7 @@ export function isTauriApp(): boolean {
  * `animeshrik://auth/anilist/callback`. Otherwise uses current web origin.
  */
 export function anilistRedirectUri(): string {
-	if (isTauriApp()) {
-		return 'animeshrik://auth/anilist/callback';
-	}
-	if (typeof location !== 'undefined' && location.origin) {
-		return `${location.origin}${ANILIST_CALLBACK_PATH}`;
-	}
-	return ANILIST_REDIRECT_URI;
+	return 'https://animeshrik.vercel.app/auth/anilist/callback';
 }
 
 /** Public AniList GraphQL endpoint. */

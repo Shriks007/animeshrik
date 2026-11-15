@@ -143,35 +143,6 @@
 			malSyncing = false;
 		}
 	}
-
-	let showTokenModal = false;
-	let manualToken = '';
-	let tokenSaving = false;
-
-	async function saveManualToken() {
-		if (!manualToken.trim()) return;
-		tokenSaving = true;
-		try {
-			let tok = manualToken.trim();
-			if (tok.includes('access_token=')) {
-				const match = tok.match(/access_token=([^&]+)/);
-				if (match) tok = match[1];
-			}
-			updateSetting('anilistToken', tok);
-			resetProvider('anilist');
-			await fetchViewer();
-			const n = await importWatchlist();
-			toast(`Signed in — imported ${n} titles`, true);
-			stats = await fetchAccountStats();
-			showTokenModal = false;
-			manualToken = '';
-		} catch (e) {
-			logout();
-			toast(e instanceof Error ? e.message : 'Invalid AniList token', false);
-		} finally {
-			tokenSaving = false;
-		}
-	}
 </script>
 
 <svelte:head>
@@ -533,45 +504,7 @@
 							>
 								<User size={15} /> {t('signIn', $lang)}
 							</button>
-							<button
-								on:click={() => (showTokenModal = !showTokenModal)}
-								class="flex items-center gap-2 rounded-md border border-line/60 bg-surface/40 px-4 py-2.5 text-sm font-medium text-ink transition hover:border-accent/40 active:scale-95"
-							>
-								<ExternalLink size={14} /> Paste Token / PIN
-							</button>
 						</div>
-
-						{#if showTokenModal}
-							<div class="hairline mt-4 rounded-xl bg-surface/60 p-4">
-								<h4 class="text-xs font-semibold text-ink">Connect with AniList Token</h4>
-								<p class="mt-1 text-xs text-muted">
-									If OAuth redirect doesn't return to the app automatically, open the link below, authorize, copy the access token from the URL, and paste it here:
-								</p>
-								<a
-									href="https://anilist.co/api/v2/oauth/authorize?client_id=56322&response_type=token"
-									target="_blank"
-									rel="noreferrer"
-									class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline"
-								>
-									<ExternalLink size={12} /> Open AniList Authorize Page
-								</a>
-								<div class="mt-3 flex gap-2">
-									<input
-										bind:value={manualToken}
-										type="password"
-										placeholder="Paste AniList access token..."
-										class="min-w-0 flex-1 rounded-md border border-line/60 bg-bg/80 px-3 py-1.5 text-xs text-ink placeholder:text-muted focus:border-accent focus:outline-none"
-									/>
-									<button
-										on:click={saveManualToken}
-										disabled={!manualToken.trim() || tokenSaving}
-										class="rounded-md bg-accent px-4 py-1.5 text-xs font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
-									>
-										{tokenSaving ? 'Connecting...' : 'Connect'}
-									</button>
-								</div>
-							</div>
-						{/if}
 					{/if}
 				</div>
 

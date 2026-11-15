@@ -169,12 +169,12 @@
 	}
 </script>
 
-<!-- Top bar is only shown when the mobile bottom bar is hidden (md+). -->
-<header class="header-drop sticky top-0 z-50 hidden md:block md:px-4 md:pt-3">
+<!-- Top bar shown across all screen sizes with notification bell on top-right -->
+<header class="header-drop sticky top-0 z-50 block px-2.5 pt-2 md:px-4 md:pt-3">
 	<div
-		class="relative border-b border-line/50 bg-bg/60 text-ink backdrop-blur-2xl supports-[backdrop-filter]:bg-bg/50 md:rounded-2xl md:border md:border-line/60 md:shadow-2xl md:shadow-black/20"
+		class="relative border border-line/60 bg-bg/85 text-ink backdrop-blur-2xl supports-[backdrop-filter]:bg-bg/75 rounded-2xl shadow-lg md:shadow-2xl md:shadow-black/20"
 	>
-		<div bind:this={topbar} class="mx-auto flex h-16 items-center gap-2 px-4 sm:px-6">
+		<div bind:this={topbar} class="mx-auto flex h-14 md:h-16 items-center gap-2 px-3 sm:px-6">
 			<!-- Left end: logo, then the nav links -->
 			<a
 				bind:this={logoSlot}
@@ -185,11 +185,11 @@
 			>
 				{#if compactLogo}
 					<span
-						class="block h-10 bg-accent"
+						class="block h-8 md:h-10 bg-accent"
 						style="aspect-ratio: 163 / 180; -webkit-mask: url('/favicon.png') no-repeat center / contain; mask: url('/favicon.png') no-repeat center / contain;"
 					></span>
 				{:else}
-					<Logo height={50} />
+					<Logo height={36} />
 				{/if}
 			</a>
 			<!-- Search trigger -->			
@@ -205,14 +205,6 @@
 				>
 					<Command size={10} /> S
 				</span>
-			</button>
-			<!-- Mobile search button -->
-			<button
-				on:click={onSearch}
-				class="grid h-8 w-8 place-items-center rounded-full border border-line/50 bg-surface/40 text-muted transition-all duration-150 hover:border-accent/40 hover:text-ink sm:hidden"
-				aria-label={t('search', $lang)}
-			>
-				<Search size={15} />
 			</button>
 
 
@@ -246,7 +238,7 @@
 				{/each}
 			</nav>	
 			<!-- Language button EN / JP / RO -->
-			<div class="relative">
+			<div class="relative hidden sm:block">
 				<Tooltip label={t('siteLanguage', $lang)}>
 					<button
 						on:click={() => {
@@ -286,7 +278,7 @@
 			</div>
 
 			<!-- Themes button + dropdown -->
-			<div class="relative">
+			<div class="relative hidden sm:block">
 				<Tooltip label={t('theme', $lang)}>
 					<button
 						on:click={() => {

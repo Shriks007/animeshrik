@@ -71,6 +71,31 @@ jobs:
           TAURI_ENV_PLATFORM: android
         run: |
           pnpm tauri android init
+          pnpm tauri icon src-tauri/icons/icon.png || true
+          python3 -c "
+          import os
+          from PIL import Image
+          src = 'src-tauri/icons/icon.png'
+          if os.path.exists(src):
+              img = Image.open(src).convert('RGBA')
+              sizes = {
+                  'mipmap-mdpi': 48,
+                  'mipmap-hdpi': 72,
+                  'mipmap-xhdpi': 96,
+                  'mipmap-xxhdpi': 144,
+                  'mipmap-xxxhdpi': 192,
+              }
+              for folder, size in sizes.items():
+                  target_dir = f'src-tauri/gen/android/app/src/main/res/{folder}'
+                  os.makedirs(target_dir, exist_ok=True)
+                  resized = img.resize((size, size), Image.Resampling.LANCZOS)
+                  for name in ['ic_launcher.png', 'ic_launcher_round.png', 'ic_launcher_foreground.png']:
+                      dest = os.path.join(target_dir, name)
+                      resized.save(dest, 'PNG')
+                      print(f'Wrote custom icon to {dest} ({size}x{size})')
+          else:
+              print('Warning: icon.png not found')
+          "
           python3 -c "
           path = 'src-tauri/gen/android/app/src/main/AndroidManifest.xml'
           with open(path, 'r') as f:

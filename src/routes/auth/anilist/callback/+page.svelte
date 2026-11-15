@@ -54,13 +54,18 @@
 		try {
 			if (!token && code) {
 				try {
-					token = await exchangeCode(code);
-				} catch {
-					// Fallback: If code exchange fails (e.g. mobile without server secret), prompt for token or retry
+					const core = (window as unknown as { __TAURI__?: { core?: { invoke: (cmd: string, args?: unknown) => Promise<string> } } })?.__TAURI__?.core;
+					if (core?.invoke) {
+						token = await core.invoke('exchange_anilist_code', { code });
+					} else {
+						token = await exchangeCode(code);
+					}
+				} catch (err) {
+					console.error('Code exchange failed:', err);
 				}
 			}
 			if (!token) {
-				error = 'Could not obtain access token automatically. Please authorize again or paste your token below.';
+				error = 'Could not obtain access token automatically. Please try signing in again.';
 				return;
 			}
 			updateSetting('anilistToken', token);
@@ -74,26 +79,6 @@
 			error = e instanceof Error ? e.message : t('signInFailed', $lang);
 		}
 	});
-
-	let pastedToken = '';
-	async function applyPastedToken() {
-		if (!pastedToken.trim()) return;
-		let tok = pastedToken.trim();
-		if (tok.includes('access_token=')) {
-			const m = tok.match(/access_token=([^&]+)/);
-			if (m) tok = m[1];
-		}
-		try {
-			updateSetting('anilistToken', tok);
-			resetProvider('anilist');
-			await fetchViewer();
-			const n = await importWatchlist();
-			toast(`Signed in — imported ${n} titles`, true);
-			goto('/home');
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Invalid AniList token';
-		}
-	}
 </script>
 
 <svelte:head><title>{t('anilistSignIn', $lang)} — AnimeShrik</title></svelte:head>
@@ -103,24 +88,6 @@
 		{#if error}
 			<p class="text-sm font-semibold text-red-400">{error}</p>
 			<p class="mt-2 text-xs text-muted">{t('signInLinkHint', $lang)}</p>
-
-			<div class="mt-4 rounded-lg bg-surface/50 p-3 text-left">
-				<p class="text-xs text-muted">Or paste your access token:</p>
-				<div class="mt-2 flex gap-2">
-					<input
-						bind:value={pastedToken}
-						type="password"
-						placeholder="Paste token..."
-						class="min-w-0 flex-1 rounded border border-line/60 bg-bg px-2.5 py-1.5 text-xs text-ink placeholder:text-muted focus:border-accent focus:outline-none"
-					/>
-					<button
-						on:click={applyPastedToken}
-						class="rounded bg-accent px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
-					>
-						Submit
-					</button>
-				</div>
-			</div>
 
 			<button
 				on:click={startLogin}
