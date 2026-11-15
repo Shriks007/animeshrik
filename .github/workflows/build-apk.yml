@@ -60,26 +60,29 @@ jobs:
           export TAURI_ENV_PLATFORM=android
           pnpm run build
 
-      - name: Build Android APK with Tauri Action
-        uses: tauri-apps/tauri-action@v0
+      - name: Build Android APK with Tauri CLI
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_BUILD: 1
           TAURI_ENV_PLATFORM: android
-        with:
-          mobile: android
-          args: --apk --target aarch64
+          CI: 1
+        run: |
+          pnpm tauri android init
+          pnpm tauri android build --apk --debug --target aarch64
 
       - name: Locate Generated APKs
         if: always()
         run: |
           mkdir -p output-apks
-          find src-tauri/gen/android -name "*.apk" -exec cp {} output-apks/ \; 2>&1 || true
+          find src-tauri -name "*.apk" -exec cp {} output-apks/ \; 2>&1 || true
           find target -name "*.apk" -exec cp {} output-apks/ \; 2>&1 || true
+          FIRST_APK=$(find output-apks -name "*.apk" | head -n 1)
+          if [ -n "$FIRST_APK" ]; then
+            cp "$FIRST_APK" output-apks/AnimeShrik.apk
+          fi
           ls -la output-apks/ || true
 
       - name: Upload AnimeShrik APK Artifact
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: AnimeShrik-Android-APK
