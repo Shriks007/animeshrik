@@ -22,18 +22,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK & NDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 11076708
-
-      - name: Install Android Platforms and NDK
+      - name: Setup Android SDK and NDK
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
-
-      - name: Set Android Environment Variables
-        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           echo "NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
 
@@ -60,14 +52,13 @@ jobs:
 
       - name: Initialize Tauri Android Scaffolding (if needed)
         run: |
-          pnpm dlx @tauri-apps/cli android init || true
+          pnpm tauri android init || true
 
-      - name: Build Android APK (Debug & Release)
+      - name: Build Android APK (Debug)
         run: |
-          # Build universal & aarch64 debug APK for instant testing on Nothing Phone 4A 5G
           export TAURI_BUILD=1
           export TAURI_ENV_PLATFORM=android
-          pnpm dlx @tauri-apps/cli android build --apk --debug --target aarch64
+          pnpm tauri android build --apk --debug --target aarch64
 
       - name: Locate Generated APKs
         id: find_apks
