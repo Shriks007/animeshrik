@@ -118,7 +118,7 @@ pub async fn exchange_auth_code(code: &str) -> Result<String, String> {
     let params = [
         ("grant_type", "authorization_code"),
         ("client_id", "57165"),
-        ("client_secret", "yQyq5iF8fidbunsljB19WhRi03JOlmD5KeosB91p"),
+        ("client_secret", "yQyq5iF8fidbunsIjB19WhRi03JOlmD5KeosB91p"),
         ("redirect_uri", "animeshrik://auth/anilist/callback"),
         ("code", code),
     ];

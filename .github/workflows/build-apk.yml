@@ -93,3 +93,24 @@ jobs:
           name: AnimeShrik-Android-APK
           path: output-apks/*.apk
           retention-days: 14
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        with:
+          tag_name: v2.0.0
+          name: "AnimeShrik v2.0.0"
+          body: |
+            ### AnimeShrik v2.0.0 Production Release
+
+            - **Redesigned UI**: UI/UX Pro Max cinematic dark entertainment theme (`#070A12`, crimson accents, frosted cards).
+            - **Mobile Safe Area**: Fixed status bar & camera punch hole overlap.
+            - **Mobile Controls**: Simplified hero slider by hiding clashing desktop arrow buttons on mobile.
+            - **AniList OAuth**: Configured client `57165` with system browser opener (`@tauri-apps/plugin-opener`) and custom scheme deep link (`animeshrik://auth/anilist/callback`).
+          files: |
+            output-apks/AnimeShrik.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
