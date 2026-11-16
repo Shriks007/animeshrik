@@ -50,7 +50,7 @@ function recallRedirect(): string {
 }
 
 /** Redirect the browser to AniList's consent screen. */
-export function startLogin(): void {
+export async function startLogin(): Promise<void> {
 	// Use the origin the user is on right now, so the callback comes back to
 	// this device instead of a fixed (possibly unreachable) host.
 	const redirect = anilistRedirectUri();
@@ -60,7 +60,17 @@ export function startLogin(): void {
 		redirect_uri: redirect,
 		response_type: 'code'
 	});
-	location.href = `${ANILIST_AUTH_URL}?${params}`;
+	const url = `${ANILIST_AUTH_URL}?${params}`;
+	if (isTauriApp()) {
+		try {
+			const { openUrl } = await import('@tauri-apps/plugin-opener');
+			await openUrl(url);
+			return;
+		} catch (e) {
+			console.error('Failed to openUrl via opener plugin:', e);
+		}
+	}
+	location.href = url;
 }
 
 /** Exchange an authorization code for an access token (via our server route). */

@@ -25,3 +25,4 @@ tokio = { version = "1", features = ["full"] }
 chrono = { version = "0.4", features = ["serde"] }
 url = "2.5"
 lazy_static = "1.4"
+tauri-plugin-opener = "2.0"
