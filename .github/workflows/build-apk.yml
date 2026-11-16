@@ -98,15 +98,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         with:
-          tag_name: v2.0.0
-          name: "AnimeShrik v2.0.0"
+          tag_name: v2.0.1
+          name: "AnimeShrik v2.0.1"
           body: |
-            ### AnimeShrik v2.0.0 Production Release
+            ### AnimeShrik v2.0.1 Release
 
-            - **Redesigned UI**: UI/UX Pro Max cinematic dark entertainment theme (`#070A12`, crimson accents, frosted cards).
-            - **Mobile Safe Area**: Fixed status bar & camera punch hole overlap.
-            - **Mobile Controls**: Simplified hero slider by hiding clashing desktop arrow buttons on mobile.
-            - **AniList OAuth**: Configured client `57165` with system browser opener (`@tauri-apps/plugin-opener`) and custom scheme deep link (`animeshrik://auth/anilist/callback`).
+            - **Deep Link Routing**: Integrated `@tauri-apps/plugin-deep-link` to capture `animeshrik://auth/anilist/callback` redirects from Chrome and complete the AniList authentication seamlessly.
+            - **Mobile Navigation Polish**: Hid the desktop copyright/terms text block on mobile screens so it never collides behind the mobile bottom navigation bar.
+            - **Safe Area**: Preserved status bar and notch insets.
           files: |
             output-apks/AnimeShrik.apk
           draft: false

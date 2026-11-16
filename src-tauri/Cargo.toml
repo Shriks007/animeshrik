@@ -1,6 +1,6 @@
 [package]
 name = "animeshrik"
-version = "2.0.0"
+version = "2.0.1"
 description = "AnimeShrik Android App"
 authors = ["AnimeShrik"]
 edition = "2021"
@@ -26,3 +26,4 @@ chrono = { version = "0.4", features = ["serde"] }
 url = "2.5"
 lazy_static = "1.4"
 tauri-plugin-opener = "2.0"
+tauri-plugin-deep-link = "2.0"

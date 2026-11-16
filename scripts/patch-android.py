@@ -21,12 +21,18 @@ for manifest_path in manifest_files:
         with open(manifest_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
+        if 'android:launchMode' not in content:
+            content = content.replace('<activity', '<activity\n            android:launchMode="singleTask"')
+            print(f'[patch-android] Added android:launchMode="singleTask" to {manifest_path}')
+
         if 'android:scheme="animeshrik"' not in content and '</activity>' in content:
             content = content.replace('</activity>', deep_link_filter + '\n    </activity>')
             with open(manifest_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             print(f'[patch-android] Injected animeshrik scheme into {manifest_path}')
         else:
-            print(f'[patch-android] Skipped {manifest_path} (already patched or no activity tag)')
+            with open(manifest_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            print(f'[patch-android] Updated {manifest_path}')
     except Exception as e:
         print(f'[patch-android] Error patching {manifest_path}: {e}')

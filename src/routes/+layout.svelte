@@ -50,8 +50,45 @@
 			}
 		}
 		window.addEventListener('keydown', onKey);
-		return () => window.removeEventListener('keydown', onKey);
+
+		// Deep link handling for mobile custom scheme (e.g. animeshrik://auth/anilist/callback?code=...)
+		let unlistenDeepLink: (() => void) | undefined;
+		(async () => {
+			try {
+				const { getCurrent, onOpenUrl } = await import('@tauri-apps/plugin-deep-link');
+				const startUrls = await getCurrent();
+				if (startUrls && startUrls.length > 0) {
+					for (const u of startUrls) handleDeepLinkUrl(u);
+				}
+				unlistenDeepLink = await onOpenUrl((urls) => {
+					for (const u of urls) handleDeepLinkUrl(u);
+				});
+			} catch {
+				// Non-tauri or plugin unavailable
+			}
+		})();
+
+		return () => {
+			window.removeEventListener('keydown', onKey);
+			if (unlistenDeepLink) unlistenDeepLink();
+		};
 	});
+
+	function handleDeepLinkUrl(rawUrl: string) {
+		if (!rawUrl) return;
+		console.log('[deep-link] Received URL:', rawUrl);
+		try {
+			const normalized = rawUrl.replace(/^animeshrik:\/\//, 'http://localhost/');
+			const parsed = new URL(normalized);
+			if (parsed.pathname.includes('/auth/anilist/callback')) {
+				goto(`/auth/anilist/callback${parsed.search}`);
+			} else if (parsed.pathname && parsed.pathname !== '/') {
+				goto(`${parsed.pathname}${parsed.search}`);
+			}
+		} catch (e) {
+			console.error('[deep-link] Error parsing URL:', rawUrl, e);
+		}
+	}
 
 	function onPaletteNav(e: CustomEvent<string>) {
 		goto(e.detail);
@@ -69,7 +106,10 @@
 			<slot />
 		</main>
 		{#if !bare}
-			<Footer />
+			<!-- Desktop footer only: hidden on mobile so it doesn't clash behind the mobile navigation bar -->
+			<div class="hidden md:block">
+				<Footer />
+			</div>
 		{/if}
 	</div>
 

@@ -54,14 +54,20 @@
 		try {
 			if (!token && code) {
 				try {
-					const core = (window as unknown as { __TAURI__?: { core?: { invoke: (cmd: string, args?: unknown) => Promise<string> } } })?.__TAURI__?.core;
-					if (core?.invoke) {
-						token = await core.invoke('exchange_anilist_code', { code });
-					} else {
-						token = await exchangeCode(code);
+					const { invoke } = await import('@tauri-apps/api/core');
+					token = await invoke<string>('exchange_anilist_code', { code });
+				} catch (e1) {
+					console.warn('Native invoke failed, trying window.__TAURI__:', e1);
+					try {
+						const core = (window as unknown as { __TAURI__?: { core?: { invoke: (cmd: string, args?: unknown) => Promise<string> } } })?.__TAURI__?.core;
+						if (core?.invoke) {
+							token = await core.invoke('exchange_anilist_code', { code });
+						} else {
+							token = await exchangeCode(code);
+						}
+					} catch (err) {
+						console.error('Code exchange failed:', err);
 					}
-				} catch (err) {
-					console.error('Code exchange failed:', err);
 				}
 			}
 			if (!token) {
