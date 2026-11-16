@@ -89,6 +89,50 @@ jobs:
               with open(path, 'w') as f:
                   f.write(content)
           print('Injected animeshrik scheme intent-filter into AndroidManifest.xml')
+
+          import glob
+          main_activities = glob.glob('src-tauri/gen/android/**/MainActivity.kt', recursive=True)
+          if main_activities:
+              kt_path = main_activities[0]
+              print('Found MainActivity at', kt_path)
+              with open(kt_path, 'r') as f:
+                  orig = f.read()
+              pkg_line = [l for l in orig.splitlines() if l.startswith('package ')][0] if 'package ' in orig else 'package com.animeshrik.app'
+              kt_code = f'''{pkg_line}
+
+import android.os.Bundle
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.webkit.WebResourceRequest
+
+class MainActivity : app.tauri.TauriActivity() {{
+  override fun onWebViewCreate(webView: WebView) {{
+    super.onWebViewCreate(webView)
+    webView.webViewClient = object : WebViewClient() {{
+      override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {{
+        val url = request?.url?.toString() ?: return false
+        return handleUrl(view, url)
+      }}
+      @Deprecated("Deprecated in Java")
+      override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {{
+        if (url == null) return false
+        return handleUrl(view, url)
+      }}
+      private fun handleUrl(view: WebView?, url: String): Boolean {{
+        if (url.startsWith("animeshrik://")) {{
+          val pathAndQuery = url.removePrefix("animeshrik://").removePrefix("/")
+          view?.loadUrl("http://tauri.localhost/" + pathAndQuery)
+          return true
+        }}
+        return false
+      }}
+    }}
+  }}
+}}
+'''
+              with open(kt_path, 'w') as f:
+                  f.write(kt_code)
+              print('Successfully patched MainActivity.kt with custom scheme interceptor!')
           "
           pnpm tauri android build --apk --debug --target aarch64
 

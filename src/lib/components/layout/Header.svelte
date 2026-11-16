@@ -170,7 +170,7 @@
 </script>
 
 <!-- Top bar shown across all screen sizes with notification bell on top-right -->
-<header class="header-drop sticky top-0 z-50 block px-2.5 pt-2 md:px-4 md:pt-3">
+<header class="header-drop sticky top-0 z-50 block px-2.5 pt-[max(env(safe-area-inset-top,0px),36px)] md:px-4 md:pt-3">
 	<div
 		class="relative border border-line/60 bg-bg/85 text-ink backdrop-blur-2xl supports-[backdrop-filter]:bg-bg/75 rounded-2xl shadow-lg md:shadow-2xl md:shadow-black/20"
 	>

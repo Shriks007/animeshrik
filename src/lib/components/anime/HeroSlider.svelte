@@ -297,9 +297,9 @@
             </div>
         </div>
 
-        <!-- Prev / next controls, top-right -->
+        <!-- Prev / next controls, top-right (desktop only to prevent clutter on mobile) -->
         {#if items.length > 1}
-            <div class="absolute right-4 top-20 z-20 flex items-center gap-2 md:right-6 md:top-24">
+            <div class="absolute right-6 top-24 z-20 hidden md:flex items-center gap-2">
                 <button
                     on:click={() => go(index - 1)}
                     class="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition hover:border-accent/50 hover:text-accent active:scale-95"
