@@ -39,6 +39,7 @@
 		anilistProfileUrl,
 		fetchViewer,
 		importWatchlist,
+		exchangeCode,
 		type AccountStats
 	} from '$lib/services/anilistOAuth';
 	import { resetProvider } from '$lib/stores/sync';
@@ -141,6 +142,62 @@
 			toast(e instanceof Error ? e.message : 'MyAnimeList sync failed', false);
 		} finally {
 			malSyncing = false;
+		}
+	}
+
+	let manualCodeInput = '';
+	let manualSubmitting = false;
+
+	async function submitManualCode() {
+		if (!manualCodeInput.trim() || manualSubmitting) return;
+		manualSubmitting = true;
+		try {
+			const raw = manualCodeInput.trim();
+			let code = '';
+			if (raw.includes('code=')) {
+				try {
+					const norm = raw.replace(/^animeshrik:\/\//, 'http://localhost/');
+					const u = new URL(norm);
+					code = u.searchParams.get('code') || '';
+				} catch {
+					const m = raw.match(/code=([^&]+)/);
+					if (m) code = decodeURIComponent(m[1]);
+				}
+			} else {
+				code = raw;
+			}
+
+			if (!code) {
+				toast('Could not find authorization code in input', false);
+				manualSubmitting = false;
+				return;
+			}
+
+			let token = '';
+			try {
+				const { invoke } = await import('@tauri-apps/api/core');
+				token = await invoke<string>('exchange_anilist_code', { code });
+			} catch (err) {
+				console.warn('Native exchange failed, trying web fallback:', err);
+				token = await exchangeCode(code);
+			}
+
+			if (token) {
+				updateSetting('anilistToken', token);
+				resetProvider('anilist');
+				await fetchViewer();
+				const n = await importWatchlist();
+				toast(`Signed in — imported ${n} titles`, true);
+				manualCodeInput = '';
+				void loadStats();
+			} else {
+				toast('Failed to obtain access token from code', false);
+			}
+		} catch (e) {
+			console.error('Manual code exchange failed:', e);
+			toast(e instanceof Error ? e.message : 'Login failed', false);
+		} finally {
+			manualSubmitting = false;
 		}
 	}
 </script>
@@ -504,6 +561,29 @@
 							>
 								<User size={15} /> {t('signIn', $lang)}
 							</button>
+						</div>
+
+						<!-- Manual token / code fallback input -->
+						<div class="mt-5 rounded-lg border border-line/40 bg-surface/20 p-3">
+							<p class="text-xs font-medium text-ink">Manual sign-in fallback</p>
+							<p class="mt-0.5 text-[11px] text-muted">
+								If Chrome didn't automatically redirect back into the app after authorising, paste the redirect URL or code below:
+							</p>
+							<div class="mt-2.5 flex gap-2">
+								<input
+									type="text"
+									bind:value={manualCodeInput}
+									placeholder="animeshrik://auth/anilist/callback?code=... or code"
+									class="flex-1 rounded-md border border-line/60 bg-surface/50 px-3 py-1.5 text-xs text-ink placeholder:text-muted/60 focus:border-accent focus:outline-none"
+								/>
+								<button
+									on:click={submitManualCode}
+									disabled={manualSubmitting || !manualCodeInput.trim()}
+									class="rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:brightness-110 active:scale-95 disabled:opacity-50"
+								>
+									{manualSubmitting ? 'Verifying...' : 'Sign In'}
+								</button>
+							</div>
 						</div>
 					{/if}
 				</div>
