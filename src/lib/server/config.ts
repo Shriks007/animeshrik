@@ -4,7 +4,7 @@ import { env } from '$env/dynamic/private';
  * Server-only secrets. Never import this module from client code — only from
  * `+server.ts` endpoints or other server-only files under `src/lib/server`.
  */
-export const ANILIST_CLIENT_SECRET: string = env.ANILIST_CLIENT_SECRET || '394ps9UhZgGIIrtex7e8tfWBNNBgWJ0sPv5rmoy1';
+export const ANILIST_CLIENT_SECRET: string = env.ANILIST_CLIENT_SECRET || 'yQyq5iF8fidbunsljB19WhRi03JOlmD5KeosB91p';
 
 /**
  * MyAnimeList OAuth client secret.

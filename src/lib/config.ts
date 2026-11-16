@@ -18,7 +18,7 @@ export const ANIZIP_URL: string = (env.PUBLIC_ANIZIP_URL ?? 'https://api.ani.zip
 	''
 );
 
-export const ANILIST_CLIENT_ID: string = env.PUBLIC_ANILIST_CLIENT_ID || '57081';
+export const ANILIST_CLIENT_ID: string = env.PUBLIC_ANILIST_CLIENT_ID || '57165';
 
 export const SITE_URL: string = (
 	env.PUBLIC_SITE_URL ?? (typeof location !== 'undefined' ? location.origin : '')
@@ -55,13 +55,21 @@ export function isTauriApp(): boolean {
 }
 
 /**
- * OAuth redirect URI for the origin the browser is currently on.
+ * OAuth redirect URI.
  *
  * In native Tauri Mobile app, uses the custom deep link scheme
  * `animeshrik://auth/anilist/callback`. Otherwise uses current web origin.
  */
 export function anilistRedirectUri(): string {
-	return 'https://animeshrik.vercel.app/auth/anilist/callback';
+	if (isTauriApp()) {
+		return 'animeshrik://auth/anilist/callback';
+	}
+	return (
+		env.PUBLIC_ANILIST_REDIRECT_URI ||
+		(typeof location !== 'undefined' && location.origin
+			? `${location.origin}${ANILIST_CALLBACK_PATH}`
+			: 'animeshrik://auth/anilist/callback')
+	);
 }
 
 /** Public AniList GraphQL endpoint. */

@@ -117,9 +117,9 @@ pub async fn exchange_auth_code(code: &str) -> Result<String, String> {
     let client = reqwest::Client::new();
     let params = [
         ("grant_type", "authorization_code"),
-        ("client_id", "57081"),
-        ("client_secret", "394ps9UhZgGIIrtex7e8tfWBNNBgWJ0sPv5rmoy1"),
-        ("redirect_uri", "https://animeshrik.vercel.app/auth/anilist/callback"),
+        ("client_id", "57165"),
+        ("client_secret", "yQyq5iF8fidbunsljB19WhRi03JOlmD5KeosB91p"),
+        ("redirect_uri", "animeshrik://auth/anilist/callback"),
         ("code", code),
     ];
     let resp = client

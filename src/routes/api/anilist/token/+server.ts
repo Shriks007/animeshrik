@@ -28,7 +28,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		typeof body.redirect_uri === 'string' && body.redirect_uri.endsWith(ANILIST_CALLBACK_PATH)
 			? body.redirect_uri
 			: '';
-	const candidates = [requested, ANILIST_REDIRECT_URI].filter(
+	const candidates = [requested, 'animeshrik://auth/anilist/callback', ANILIST_REDIRECT_URI].filter(
 		(v, i, a) => !!v && a.indexOf(v) === i
 	);
 

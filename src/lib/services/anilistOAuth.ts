@@ -58,7 +58,7 @@ export function startLogin(): void {
 	const params = new URLSearchParams({
 		client_id: ANILIST_CLIENT_ID,
 		redirect_uri: redirect,
-		response_type: 'token'
+		response_type: 'code'
 	});
 	location.href = `${ANILIST_AUTH_URL}?${params}`;
 }
