@@ -155,15 +155,47 @@ export async function refreshNotifications(force = false): Promise<void> {
 			return;
 		}
 		const allowedStatuses = st.notifyWatchingOnly ? ['watching'] : ['watching', 'planned'];
-		const ids = Object.values(get(watchlist))
+		let ids = Object.values(get(watchlist))
 			.filter((e) => allowedStatuses.includes(e.status))
 			.map((e) => e.id);
-		if (!ids.length) {
-			notifications.set([]);
-			return;
+
+		// If user is connected to AniList but watchlist is empty, auto-sync
+		if (!ids.length && st.anilistToken) {
+			try {
+				const { syncAnilistWatchlist } = await import('$lib/services/anilistOAuth');
+				await syncAnilistWatchlist();
+				ids = Object.values(get(watchlist))
+					.filter((e) => allowedStatuses.includes(e.status))
+					.map((e) => e.id);
+			} catch {}
 		}
+
 		const now = Math.floor(Date.now() / 1000);
-		const rows = await fetchAiring(ids, now - NEW_WINDOW_S, now + UPCOMING_WINDOW_S);
+		let rows: AiringRow[] = [];
+		if (ids.length > 0) {
+			rows = await fetchAiring(ids, now - NEW_WINDOW_S, now + UPCOMING_WINDOW_S);
+		} else {
+			// When watchlist is empty, notify of today's top airing episodes
+			try {
+				const scheduleData = await gql<{ Page: { airingSchedules: AiringRow[] } }>(
+					`query ($start: Int, $end: Int) {
+						Page(page: 1, perPage: 15) {
+							airingSchedules(airingAt_greater: $start, airingAt_lesser: $end, sort: TIME) {
+								airingAt
+								episode
+								media {
+									id
+									title { romaji english }
+									coverImage { extraLarge large }
+								}
+							}
+						}
+					}`,
+					{ start: now - NEW_WINDOW_S, end: now + UPCOMING_WINDOW_S }
+				);
+				rows = scheduleData.Page?.airingSchedules ?? [];
+			} catch {}
+		}
 		notifications.set(buildItems(rows, now, st.notifyUpcoming));
 		lastRefresh = Date.now();
 		pruneRead();

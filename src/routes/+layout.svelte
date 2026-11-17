@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { goto } from '$app/navigation';
 	import { beforeNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -19,6 +20,7 @@
 	import { dev } from '$app/environment';
 
 	let paletteOpen = false;
+	let showSplash = true;
 
 	/** The lander is a standalone page — no top bar, bottom bar or footer. */
 	$: bare = $page.url.pathname === '/landing';
@@ -28,6 +30,11 @@
 	beforeNavigate(() => setOg({}));
 
 	onMount(() => {
+		// Dismiss animated splash screen shortly after mounting
+		const splashTimer = setTimeout(() => {
+			showSplash = false;
+		}, 850);
+
 		// Turn the static fallback tags into absolute URLs for link previews.
 		setOg({});
 
@@ -125,4 +132,29 @@
 	<LoadingBar />
 	<!-- MyAnimeList sign-in is under construction — a popup, not a redirect. -->
 	<MalUnderConstruction open={$malUnderConstruction} />
+
+	<!-- Animated Splash Entrance -->
+	{#if showSplash}
+		<div
+			transition:fade={{ duration: 400 }}
+			class="pointer-events-none fixed inset-0 z-[200] flex flex-col items-center justify-center bg-bg"
+		>
+			<div class="flex flex-col items-center gap-4">
+				<div class="relative grid h-24 w-24 place-items-center">
+					<div class="absolute inset-0 rounded-full bg-accent/20 blur-xl animate-pulse"></div>
+					<div class="relative grid h-20 w-20 place-items-center rounded-2xl border border-accent/40 bg-surface shadow-glow">
+						<span class="font-display text-3xl font-black tracking-tighter text-accent">AS</span>
+					</div>
+				</div>
+				<div class="flex flex-col items-center">
+					<span class="font-display text-2xl font-black tracking-tight text-ink">
+						Anime<span class="text-accent">Shrik</span>
+					</span>
+					<span class="mt-1 text-[10px] font-semibold tracking-widest uppercase text-muted">
+						Cinematic Anime Streaming
+					</span>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>

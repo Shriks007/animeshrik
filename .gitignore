@@ -4,6 +4,7 @@ node_modules/
 # Build outputs
 build/
 .build/
+build-output/
 .svelte-kit/
 dist/
 src-tauri/target/

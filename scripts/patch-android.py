@@ -36,3 +36,42 @@ for manifest_path in manifest_files:
             print(f'[patch-android] Updated {manifest_path}')
     except Exception as e:
         print(f'[patch-android] Error patching {manifest_path}: {e}')
+
+# Patch build.gradle.kts for permanent signing and incremented versionCode
+gradle_files = glob.glob('src-tauri/gen/android/**/build.gradle.kts', recursive=True)
+signing_block = """
+    signingConfigs {
+        create("release") {
+            val ksFile = rootProject.file("../../release.keystore")
+            storeFile = if (ksFile.exists()) ksFile else rootProject.file("release.keystore")
+            storePassword = "animeshrik123"
+            keyAlias = "animeshrik"
+            keyPassword = "animeshrik123"
+        }
+    }
+"""
+
+for gradle_path in gradle_files:
+    if 'app/build.gradle.kts' in gradle_path or 'app\\build.gradle.kts' in gradle_path:
+        try:
+            with open(gradle_path, 'r', encoding='utf-8') as f:
+                gcontent = f.read()
+
+            if 'signingConfigs {' not in gcontent and 'android {' in gcontent:
+                gcontent = gcontent.replace('android {', 'android {' + signing_block)
+                if 'getByName("debug") {' in gcontent:
+                    gcontent = gcontent.replace('getByName("debug") {', 'getByName("debug") {\n            signingConfig = signingConfigs.getByName("release")')
+                if 'getByName("release") {' in gcontent:
+                    gcontent = gcontent.replace('getByName("release") {', 'getByName("release") {\n            signingConfig = signingConfigs.getByName("release")')
+                
+                # Ensure versionCode is updated to 203
+                import re
+                gcontent = re.sub(r'versionCode\s*=\s*\d+', 'versionCode = 203', gcontent)
+                gcontent = re.sub(r'versionName\s*=\s*"[^"]*"', 'versionName = "2.0.3"', gcontent)
+
+                with open(gradle_path, 'w', encoding='utf-8') as f:
+                    f.write(gcontent)
+                print(f'[patch-android] Injected permanent signingConfigs and v2.0.3 into {gradle_path}')
+        except Exception as e:
+            print(f'[patch-android] Error patching {gradle_path}: {e}')
+

@@ -8,6 +8,7 @@
 	import {
 		getTrending,
 		getPopularThisSeason,
+		getLatestEpisodes,
 		getRecentlyUpdated,
 		getTopAiring,
 		getTop10
@@ -19,6 +20,7 @@
 
 	let trending: Anime[] = [];
 	let seasonal: Anime[] = [];
+	let latest: Anime[] = [];
 	let recent: Anime[] = [];
 	let airing: Anime[] = [];
 	let topToday: Anime[] = [];
@@ -37,6 +39,7 @@
 	// to the popularity list), so the hero shows the current Top Airing titles.
 	$: heroItems = clean(trending, hideAdult).slice(0, 10);
 	$: trendingList = clean(trending, hideAdult);
+	$: latestList = clean(latest, hideAdult);
 	$: seasonalList = clean(seasonal, hideAdult);
 	$: recentList = clean(recent, hideAdult);
 	$: airingList = clean(airing, hideAdult);
@@ -53,6 +56,7 @@
 		errors = {};
 		const results = await Promise.allSettled([
 			getTrending(1, 16),
+			getLatestEpisodes(1, 18),
 			getPopularThisSeason(1, 18),
 			getRecentlyUpdated(1, 18),
 			getTopAiring(1, 18),
@@ -60,9 +64,11 @@
 			getTop10('week'),
 			getTop10('month')
 		]);
-		const [t, s, r, a, tt, tw, tm] = results;
+		const [t, l, s, r, a, tt, tw, tm] = results;
 		if (t.status === 'fulfilled') trending = t.value.list;
 		else errors.trending = 'trending';
+		if (l.status === 'fulfilled') latest = l.value.list;
+		else errors.latest = 'latest';
 		if (s.status === 'fulfilled') seasonal = s.value.list;
 		else errors.seasonal = 'seasonal';
 		if (r.status === 'fulfilled') recent = r.value.list;
@@ -113,13 +119,21 @@
 		<div class="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_400px]">
 			<div class="min-w-0 space-y-10">
 				<RailRow
+					title={t('latestEpisodes', $lang)}
+					items={latestList}
+					loading={loading}
+					error={errors.latest}
+					onRetry={loadAll}
+					reveal={0}
+				/>
+				<RailRow
 					title={t('popularThisSeason', $lang)}
 					items={seasonalList}
 					loading={loading}
 					error={errors.seasonal}
 					onRetry={loadAll}
 					viewAllHref="/search?sort=POPULARITY_DESC"
-					reveal={0}
+					reveal={1}
 				/>
 				<RailRow
 					title={t('recentlyUpdated', $lang)}

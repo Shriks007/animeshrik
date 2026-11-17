@@ -595,6 +595,7 @@
 					animeId={anime.id}
 					{episodes}
 					total={anime.episodes}
+					nextAiringEpisode={anime.nextAiring?.episode}
 					bind:view
 				/>
 			</section>

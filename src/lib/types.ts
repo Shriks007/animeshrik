@@ -45,6 +45,7 @@ export interface Anime {
 	studio: string | null;
 	startDate: string | null;
 	nextAiring: AiringEpisode | null;
+	latestEpisode?: number;
 	isAdult: boolean;
 	/** Related seasons / prequels / sequels (optional, fetched on detail pages). */
 	relations?: {

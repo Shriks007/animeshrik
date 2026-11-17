@@ -53,7 +53,7 @@
 {#if open}
 	<!-- Portalled to <body> so the sheet is not trapped in the page content's
 	     stacking context (which sits below the bottom navigation bar). -->
-	<div use:portal class="fixed inset-0 z-[70] flex items-end justify-center sm:items-center">
+	<div use:portal class="fixed inset-0 z-[150] flex items-end justify-center sm:items-center">
 		<!-- backdrop -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
@@ -91,7 +91,7 @@
 				<h3 class="font-display text-sm font-semibold tracking-wide uppercase text-ink/90">{title}</h3>
 			</div>
 
-			<div class="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
+			<div class="min-h-0 flex-1 overflow-y-auto px-5 pb-[max(1.75rem,env(safe-area-inset-bottom,0px))]">
 				<slot />
 			</div>
 		</div>

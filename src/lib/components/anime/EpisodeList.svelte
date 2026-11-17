@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	import { Check, ChevronDown, Film, LayoutGrid, List, Search, Sliders, Image as ImageIcon } from 'lucide-svelte';
+	import { Check, ChevronDown, Clock, Film, LayoutGrid, List, Search, Sliders, Image as ImageIcon } from 'lucide-svelte';
 	import type { EpisodeAsset } from '$lib/types';
-	import { watched } from '$lib/stores/history';
+	import { progress, watched } from '$lib/stores/history';
+	import { toast } from '$lib/stores/toast';
 	import { lang, t } from '$lib/stores/i18n';
 	import BottomSheet from '$lib/components/ui/BottomSheet.svelte';
 
@@ -11,6 +12,7 @@
 	export let episodes: EpisodeAsset[] = [];
 	export let total: number | null = null;
 	export let currentEp = 0;
+	export let nextAiringEpisode: number | null = null;
 	export let view: 'tiles' | 'titles' | 'detailed' = 'tiles';
 	/** Density of the numbered tiles: 'sm' (compact), 'lg' (spacious) or 'xl' (watch-page sidebar). */
 	export let tileSize: 'sm' | 'lg' | 'xl' = 'lg';
@@ -29,6 +31,7 @@
 	let rangeDrawer = false;
 	/** Narrow viewport → drawers instead of dropdowns. */
 	let isNarrow = false;
+	let initializedAnimeId = 0;
 
 	/**
 	 * Watched flags come straight from the store so the tick appears the
@@ -65,6 +68,42 @@
 					end: Math.min(count, (i + 1) * 100)
 				}))
 			: [];
+
+	// Automatically default the range to the current episode or highest watched episode
+	$: if (ranges.length > 0 && initializedAnimeId !== animeId) {
+		let target = currentEp > 0 ? currentEp : 0;
+		if (!target) {
+			const prog = $progress[animeId]?.ep;
+			if (prog) {
+				target = prog;
+			} else {
+				let maxEp = 0;
+				for (const k of Object.keys(watchedFlags)) {
+					if (k.startsWith(`${animeId}:`)) {
+						const num = parseInt(k.slice(k.indexOf(':') + 1), 10);
+						if (num > maxEp) maxEp = num;
+					}
+				}
+				if (maxEp > 0) target = maxEp;
+			}
+		}
+		if (target > 0) {
+			const idx = ranges.findIndex((r) => target >= r.start && target <= r.end);
+			if (idx !== -1) rangeIndex = idx;
+		} else {
+			rangeIndex = 0;
+		}
+		initializedAnimeId = animeId;
+	}
+
+	// Also sync range if currentEp changes dynamically (e.g. next episode button clicked)
+	$: if (currentEp > 0 && ranges.length > 0) {
+		const idx = ranges.findIndex((r) => currentEp >= r.start && currentEp <= r.end);
+		if (idx !== -1 && idx !== rangeIndex) {
+			rangeIndex = idx;
+		}
+	}
+
 	$: if (rangeIndex > 0 && rangeIndex >= ranges.length) rangeIndex = 0;
 	$: activeRange = ranges[rangeIndex] ?? null;
 	$: inRange = activeRange ? source.slice(activeRange.start - 1, activeRange.end) : source;
@@ -77,7 +116,27 @@
 			)
 		: inRange;
 
-	/* ---- dates ---- */
+	/* ---- dates & upcoming detection ---- */
+	function isEpisodeUpcoming(ep: EpisodeAsset): boolean {
+		if (nextAiringEpisode != null && ep.number >= nextAiringEpisode) return true;
+		if (ep.releaseDate) {
+			const t = new Date(ep.releaseDate).getTime();
+			if (!Number.isNaN(t) && t > Date.now()) return true;
+		}
+		return false;
+	}
+
+	function onEpClick(e: MouseEvent, ep: EpisodeAsset, upcoming: boolean) {
+		if (upcoming) {
+			e.preventDefault();
+			const dateStr = dateFor(ep);
+			toast(
+				`EP ${ep.number} has not aired yet${dateStr ? ` (airs ${dateStr})` : ''}!`,
+				false
+			);
+		}
+	}
+
 	function prettyDate(d: string): string {
 		const t = new Date(d);
 		if (Number.isNaN(t.getTime())) return d;
@@ -209,23 +268,31 @@
 					: 'grid-cols-[repeat(auto-fill,minmax(3.25rem,1fr))]'}"
 		>
 			{#each filtered as ep, i (ep.number)}
-				{@const watched = !!watchedFlags[`${animeId}:${ep.number}`]}
+				{@const upcoming = isEpisodeUpcoming(ep)}
+				{@const watched = !upcoming && !!watchedFlags[`${animeId}:${ep.number}`]}
 				<a
 					href={`/watch/${animeId}/${ep.number}`}
-					title={ep.title ?? `${t('episode', $lang)} ${ep.number}`}
+					on:click={(e) => onEpClick(e, ep, upcoming)}
+					title={upcoming ? `${t('episode', $lang)} ${ep.number} (Airing Soon)` : (ep.title ?? `${t('episode', $lang)} ${ep.number}`)}
 					class="relative grid place-items-center rounded-lg border {tileSize === 'sm'
 						? 'h-10'
 						: tileSize === 'xl'
 							? 'h-14'
-							: 'h-12'} transition-all duration-150 active:scale-95 {currentEp === ep.number
-						? 'border-accent/60 bg-accent/15 text-accent shadow-glow-sm'
-						: 'border-line/50 bg-surface/20 text-ink hover:border-accent/40'}"
+							: 'h-12'} transition-all duration-150 {upcoming
+						? 'border-dashed border-line/50 bg-surface/10 text-muted/50 hover:border-line/70'
+						: currentEp === ep.number
+							? 'border-accent/60 bg-accent/15 text-accent shadow-glow-sm'
+							: 'border-line/50 bg-surface/20 text-ink hover:border-accent/40 active:scale-95'}"
 					transition:fade={{ duration: 260, delay: Math.min(i * 22, 500) }}
 				>
-					<span class="text-sm font-bold tabular-nums {currentEp === ep.number ? 'text-accent' : 'text-ink'}">
+					<span class="text-sm font-bold tabular-nums {upcoming ? 'text-muted/50' : currentEp === ep.number ? 'text-accent' : 'text-ink'}">
 						{String(ep.number).padStart(2, '0')}
 					</span>
-					{#if watched}
+					{#if upcoming}
+						<span class="absolute right-1 top-1 text-muted/40" title="Airing Soon">
+							<Clock size={8} />
+						</span>
+					{:else if watched}
 						<span
 							class="absolute right-1 top-1 grid h-3 w-3 place-items-center rounded-full bg-accent text-white"
 						>
@@ -242,12 +309,16 @@
 				? 'grid-cols-1'
 				: 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'}">
 			{#each filtered as ep (ep.number)}
-				{@const watched = !!watchedFlags[`${animeId}:${ep.number}`]}
+				{@const upcoming = isEpisodeUpcoming(ep)}
+				{@const watched = !upcoming && !!watchedFlags[`${animeId}:${ep.number}`]}
 				<a
 					href={`/watch/${animeId}/${ep.number}`}
-					class="flex items-center gap-3 rounded-md border border-line/50 px-3 py-2.5 transition-colors hover:bg-surface/50 active:scale-[0.99] {currentEp === ep.number
-						? 'border-accent/50 bg-accent/10'
-						: ''}"
+					on:click={(e) => onEpClick(e, ep, upcoming)}
+					class="flex items-center gap-3 rounded-md border border-line/50 px-3 py-2.5 transition-colors {upcoming
+						? 'opacity-60 bg-surface/10 hover:bg-surface/20'
+						: currentEp === ep.number
+							? 'border-accent/50 bg-accent/10'
+							: 'hover:bg-surface/50 active:scale-[0.99]'}"
 					transition:fade={{ duration: 180 }}
 				>
 					<span
@@ -257,10 +328,15 @@
 					>
 						#{String(ep.number).padStart(2, '0')}
 					</span>
-					<span class="min-w-0 flex-1 truncate text-sm text-ink">
+					<span class="min-w-0 flex-1 truncate text-sm {upcoming ? 'text-muted' : 'text-ink'}">
 						{ep.title ?? `${t('episode', $lang)} ${ep.number}`}
 					</span>
-					{#if watched}
+					{#if upcoming}
+						<span class="flex items-center gap-1 rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-bold text-accent">
+							<Clock size={10} />
+							Airing Soon
+						</span>
+					{:else if watched}
 						<Check size={14} class="shrink-0 text-accent" strokeWidth={3} />
 					{/if}
 				</a>
@@ -274,13 +350,16 @@
 				? 'grid-cols-1'
 				: 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'}">
 			{#each filtered as ep (ep.number)}
-				{@const watched = !!watchedFlags[`${animeId}:${ep.number}`]}
+				{@const upcoming = isEpisodeUpcoming(ep)}
+				{@const watched = !upcoming && !!watchedFlags[`${animeId}:${ep.number}`]}
 				<a
 					href={`/watch/${animeId}/${ep.number}`}
-					class="flex items-center gap-3 rounded-lg border border-line/50 p-2 transition-colors hover:bg-surface/50 active:scale-[0.99] {currentEp ===
-					ep.number
-						? 'border-accent/50 bg-accent/10'
-						: ''}"
+					on:click={(e) => onEpClick(e, ep, upcoming)}
+					class="flex items-center gap-3 rounded-lg border border-line/50 p-2 transition-colors {upcoming
+						? 'opacity-60 bg-surface/10 hover:bg-surface/20'
+						: currentEp === ep.number
+							? 'border-accent/50 bg-accent/10'
+							: 'hover:bg-surface/50 active:scale-[0.99]'}"
 					transition:fade={{ duration: 180 }}
 				>
 					<div class="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-surface2">
@@ -288,10 +367,18 @@
 							<img src={ep.image} alt="" loading="lazy" class="h-full w-full object-cover" />
 						{:else}
 							<div class="grid h-full w-full place-items-center text-muted/40">
-								<Film size={18} />
+								{#if upcoming}
+									<Clock size={18} />
+								{:else}
+									<Film size={18} />
+								{/if}
 							</div>
 						{/if}
-						{#if watched}
+						{#if upcoming}
+							<span class="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.5 text-[9px] font-semibold text-accent">
+								Upcoming
+							</span>
+						{:else if watched}
 							<span
 								class="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-accent text-white"
 							>
@@ -314,7 +401,7 @@
 						<p
 							class="mt-1 truncate text-sm font-medium {currentEp === ep.number
 								? 'text-accent'
-								: 'text-ink'}"
+								: upcoming ? 'text-muted' : 'text-ink'}"
 						>
 							{ep.title ?? `${t('episode', $lang)} ${ep.number}`}
 						</p>

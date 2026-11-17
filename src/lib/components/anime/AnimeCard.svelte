@@ -182,8 +182,14 @@
 						</button>
 					</div>
 
-					<!-- upcoming episode badge -->
-					{#if showEpisodeBadge && anime.nextAiring}
+					<!-- latest / upcoming episode badge -->
+					{#if showEpisodeBadge && anime.latestEpisode}
+						<span
+							class="absolute bottom-2 left-2 rounded border border-accent/40 bg-accent/20 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-accent backdrop-blur-md"
+						>
+							EP {anime.latestEpisode}
+						</span>
+					{:else if showEpisodeBadge && anime.nextAiring}
 						<span
 							class="absolute bottom-2 left-2 rounded border border-accent/30 bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-accent"
 						>

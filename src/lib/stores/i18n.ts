@@ -313,6 +313,7 @@ const STRINGS: Dict = {
 	upcoming: { en: 'Upcoming', jp: '近日公開', romaji: 'Upcoming' },
 	topRatedAnime: { en: 'Top Rated', jp: '高評価作品', romaji: 'Top Rated' },
 	popularThisSeason: { en: 'Popular This Season', jp: '今期の人気作', romaji: 'Popular This Season' },
+	latestEpisodes: { en: 'Latest Episodes', jp: '最新エピソード', romaji: 'Latest Episodes' },
 	recentlyUpdated: { en: 'Recently Updated', jp: '最新更新', romaji: 'Recently Updated' },
 	trendingNow: { en: 'Trending Now', jp: '急上昇中', romaji: 'Trending Now' },
 	scrollLeft: { en: 'Scroll left', jp: '左へスクロール', romaji: 'Scroll left' },

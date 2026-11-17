@@ -988,6 +988,7 @@
 								{episodes}
 								total={totalEps}
 								currentEp={epNo}
+								nextAiringEpisode={anime?.nextAiring?.episode}
 								tileSize="xl"
 								onePerRow={true}
 								bind:view={listView}
@@ -1254,6 +1255,7 @@
 						{episodes}
 						total={totalEps}
 						currentEp={epNo}
+						nextAiringEpisode={anime?.nextAiring?.episode}
 						tileSize="lg"
 						onePerRow={true}
 						bind:view={listView}

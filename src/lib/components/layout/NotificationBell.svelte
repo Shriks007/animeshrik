@@ -78,7 +78,7 @@
 			<span
 				class="absolute {variant === 'header'
 					? '-right-1 -top-1 h-4 min-w-4 px-1 text-[10px]'
-					: 'right-2 top-1 h-4 min-w-4 px-1 text-[10px]'} grid place-items-center rounded-full bg-accent font-bold leading-none text-white"
+					: 'right-2 top-1 h-4 min-w-4 px-1 text-[10px]'} grid place-items-center rounded-full bg-accent font-bold leading-none text-white ring-2 ring-bg shadow-glow-sm"
 			>
 				{$unreadCount > 9 ? '9+' : $unreadCount}
 			</span>

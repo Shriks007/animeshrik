@@ -334,6 +334,49 @@ export function getRecentlyUpdated(page = 1, perPage = 18) {
 	);
 }
 
+export async function getLatestEpisodes(page = 1, perPage = 18): Promise<{ list: Anime[]; total: number }> {
+	const now = Math.floor(Date.now() / 1000);
+	try {
+		const data = await gql<{
+			Page: {
+				airingSchedules: {
+					episode: number;
+					airingAt: number;
+					media: RawMedia;
+				}[];
+				pageInfo: { total: number };
+			};
+		}>(
+			`query ($page: Int, $perPage: Int, $now: Int) {
+				Page(page: $page, perPage: $perPage) {
+					pageInfo { total }
+					airingSchedules(airingAt_lesser: $now, sort: TIME_DESC) {
+						episode
+						airingAt
+						media {
+							${MEDIA_FIELDS}
+						}
+					}
+				}
+			}`,
+			{ page, perPage: perPage * 2, now }
+		);
+		const seen = new Set<number>();
+		const list: Anime[] = [];
+		for (const row of data.Page?.airingSchedules ?? []) {
+			if (!row.media || seen.has(row.media.id)) continue;
+			seen.add(row.media.id);
+			const anime = toAnime(row.media);
+			anime.latestEpisode = row.episode;
+			list.push(anime);
+			if (list.length >= perPage) break;
+		}
+		return { list, total: data.Page?.pageInfo?.total ?? list.length };
+	} catch {
+		return getRecentlyUpdated(page, perPage);
+	}
+}
+
 export function getTop10(range: 'today' | 'week' | 'month' = 'today') {
 	const sort =
 		range === 'today' ? ['TRENDING_DESC'] : range === 'week' ? ['POPULARITY_DESC'] : ['FAVOURITES_DESC'];

@@ -1,13 +1,23 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
-	import { MessageSquare } from 'lucide-svelte';
+	import { ExternalLink, MessageSquare } from 'lucide-svelte';
 	import { themeId, customTheme } from '$lib/stores/theme';
 	import { lang, t } from '$lib/stores/i18n';
 	import { portal } from '$lib/utils/portal';
 	import { createDrawerDrag } from '$lib/utils/drawer';
 	import { lockScroll, unlockScroll } from '$lib/utils/scrollLock';
 	import { cssColorToRgb, rgbString } from '$lib/utils/color';
+
+	async function openExternalDiscussion() {
+		const targetUrl = `https://theanimecommunity.com/anime/${malId ?? anilistId}`;
+		try {
+			const { openUrl } = await import('@tauri-apps/plugin-opener');
+			await openUrl(targetUrl);
+		} catch {
+			window.open(targetUrl, '_blank', 'noreferrer');
+		}
+	}
 
 	/**
 	 * The Anime Community official comment widget.
@@ -213,10 +223,8 @@
 {/if}
 
 {#if drawerOpen && !isDesktop}
-	<!-- Portalled to <body>: the page content sits inside a `relative z-10`
-	     wrapper, so a drawer rendered in place would be trapped below the
-	     bottom navigation bar (which is a sibling of that wrapper). -->
-	<div use:portal class="fixed inset-0 z-[70] md:hidden">
+	<!-- Portalled to <body>: sits above the bottom navigation bar with z-[150] -->
+	<div use:portal class="fixed inset-0 z-[150] md:hidden">
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div class="absolute inset-0 bg-black/60 backdrop-blur-sm" on:click={() => (drawerOpen = false)} aria-hidden="true"></div>
 		<!-- The pane overlaps the bottom bar and renders on top of it. -->
@@ -225,7 +233,7 @@
 			transition:slide={{ duration: 320, axis: 'y' }}
 			class="absolute inset-x-0 bottom-0 flex flex-col rounded-t-2xl border-t border-line/40 transition-[height] duration-300 {fullscreen
 				? 'h-[100dvh]'
-				: 'h-[82vh]'}"
+				: 'h-[85vh]'}"
 			style="background-color: var(--c-surface);"	
 			role="dialog"
 			aria-label={`${t('discussion', $lang)} — ${title}`}
@@ -237,19 +245,37 @@
 				on:pointermove={drag.onPointerMove}
 				on:pointerup={drag.onPointerUp}
 				on:pointercancel={drag.onPointerCancel}
-				class="flex h-16 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
+				class="flex h-12 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
 				role="presentation"
 			>
 				<span class="h-1.5 w-16 rounded-full bg-ink/25" aria-hidden="true"></span>
 			</div>
-			<div class="px-4 pb-3">
+			<div class="flex items-center justify-between px-4 pb-2">
 				<p class="flex items-center gap-2 text-sm font-semibold text-ink">
 					<MessageSquare size={15} class="text-accent" /> {t('discussion', $lang)}
 				</p>
+				<button
+					on:click={openExternalDiscussion}
+					class="flex items-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent transition hover:bg-accent/20 active:scale-95"
+					title="Open discussion in browser to log in with Google or account"
+				>
+					<ExternalLink size={12} />
+					<span>Open in Browser</span>
+				</button>
 			</div>
-			<div class="relative min-h-0 flex-1 overflow-y-auto bg-surface px-2 pb-6">
+			<div class="relative min-h-0 flex-1 overflow-y-auto bg-surface px-3 pb-[max(1.75rem,env(safe-area-inset-bottom,0px))]">
+				<!-- Tip banner for login -->
+				<div class="mb-3 flex items-center justify-between rounded-lg border border-accent/20 bg-accent/[0.06] p-2.5 text-xs text-muted">
+					<span>To sign in with Google or write comments:</span>
+					<button
+						on:click={openExternalDiscussion}
+						class="ml-2 font-semibold text-accent underline underline-offset-2 hover:brightness-110"
+					>
+						Open in Chrome
+					</button>
+				</div>
 				{#if loading}
-					<div transition:fade={{ duration: 200 }} class="shimmer-bg absolute inset-x-2 top-2 h-40 rounded-md"></div>
+					<div transition:fade={{ duration: 200 }} class="shimmer-bg absolute inset-x-3 top-14 h-40 rounded-md"></div>
 				{/if}
 				<div id={CONTAINER_ID}></div>
 			</div>

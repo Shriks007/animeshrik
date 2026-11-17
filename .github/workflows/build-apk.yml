@@ -64,6 +64,13 @@ jobs:
           export TAURI_ENV_PLATFORM=android
           pnpm run build
 
+      - name: Ensure Permanent Keystore
+        run: |
+          if [ ! -f src-tauri/release.keystore ]; then
+            echo "Generating permanent release keystore..."
+            keytool -genkeypair -v -keystore src-tauri/release.keystore -alias animeshrik -keyalg RSA -keysize 2048 -validity 10000 -storepass animeshrik123 -keypass animeshrik123 -dname "CN=AnimeShrik, OU=App, O=AnimeShrik, L=Tokyo, ST=Tokyo, C=JP"
+          fi
+
       - name: Build Android APK with Tauri CLI
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -98,14 +105,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         with:
-          tag_name: v2.0.2
-          name: "AnimeShrik v2.0.2"
+          tag_name: v2.0.3
+          name: "AnimeShrik v2.0.3"
           body: |
-            ### AnimeShrik v2.0.2 Release
+            ### AnimeShrik v2.0.3 Release
 
-            - **Deep Link Configuration**: Added `plugins.deep-link.mobile` scheme configuration to `tauri.conf.json` so the Android runtime validates and accepts `animeshrik://` intents.
-            - **Manual Sign-in Fallback**: Added a manual fallback input on the Settings -> Account tab to paste the authorization callback URL or code directly.
-            - **Mobile Navigation Polish**: Cleaned up desktop footer overlap and preserved mobile navigation.
+            - **Permanent Release Signing**: Configured dedicated release signing key in Gradle so that all future APK updates install seamlessly over previous versions without uninstalling.
+            - **Bottom Sheet Z-Index Fix**: Fixed episode range and display sheets overlapping beneath the bottom navigation bar.
+            - **Smart Episode Range Selection**: Episode lists now automatically jump to your current or highest-watched episode instead of defaulting to 1–100.
+            - **Upcoming Episode Detection**: Future/unreleased episodes are styled as "Airing Soon", prevented from false watched ticks, and guarded against dead server loads.
+            - **Latest Episodes Row**: Added dedicated "Latest Episodes" row on the Home page showing recently aired episodes with episode numbers.
+            - **Discussion Quick Browser Access**: Added 1-tap "Open in Browser" button and login guidance for community discussions and Google login.
+            - **Notification Count Badge**: Connected unread notification badge with real-time airing schedules and watchlist sync.
           files: |
             output-apks/AnimeShrik.apk
           draft: false
